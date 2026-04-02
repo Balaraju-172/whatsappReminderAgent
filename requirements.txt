@@ -1,0 +1,6 @@
+flask
+twilio
+schedule
+python-dotenv
+groq
+gunicorn
