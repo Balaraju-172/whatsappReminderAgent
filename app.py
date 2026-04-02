@@ -5,6 +5,7 @@ from utils import parse_message
 import threading
 from scheduler import run_scheduler
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
@@ -39,4 +40,5 @@ def home():
     return "Bot running 🚀"
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
