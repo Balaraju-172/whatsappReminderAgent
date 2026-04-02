@@ -25,7 +25,7 @@ def run_scheduler():
 
 def check_reminders():
     now = datetime.now()
-    current_time = now.strftime("%H:%M")
+    current_time = now.strftime("%H:%M:%S")
 
     print(f"[Scheduler] Checking at {current_time}")
 
@@ -38,7 +38,7 @@ def check_reminders():
 
         if time_val:
             try:
-                # ✅ Convert DB time to datetime (attach today's date)
+                # ✅ Convert stored time to today's datetime
                 reminder_time = datetime.strptime(time_val, "%H:%M")
                 reminder_time = reminder_time.replace(
                     year=now.year,
@@ -46,9 +46,12 @@ def check_reminders():
                     day=now.day
                 )
 
-                # 🔥 MAIN FIX:
-                # If current time passed or equal → send reminder
-                if now >= reminder_time:
+                # 🔥 CRITICAL FIX: precise time window
+                time_diff = (now - reminder_time).total_seconds()
+
+                # ✅ Only send within 0–60 seconds AFTER exact time
+                # (prevents early trigger + allows small delay)
+                if 0 <= time_diff < 60:
                     print(f"🔥 Sending reminder to {user}: {task}")
 
                     client.messages.create(
@@ -57,7 +60,7 @@ def check_reminders():
                         body=f"⏰ Reminder: {task}"
                     )
 
-                    # ✅ Delete after sending (avoid duplicates)
+                    # ✅ Delete after sending
                     delete_reminder(reminder_id)
 
             except Exception as e:
