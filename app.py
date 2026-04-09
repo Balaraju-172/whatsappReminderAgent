@@ -14,16 +14,7 @@ app = Flask(__name__)
 # ---------------------------------------------------
 # ✅ FIX: Start scheduler ONLY ONCE (Flask 3 compatible)
 # ---------------------------------------------------
-scheduler_started = False
 
-@app.before_request
-def start_scheduler_once():
-    global scheduler_started
-
-    if not scheduler_started:
-        print("🚀 Starting scheduler thread...")
-        threading.Thread(target=run_scheduler, daemon=True).start()
-        scheduler_started = True
 
 
 # ---------------------------------------------------
@@ -62,6 +53,13 @@ def home():
 # ---------------------------------------------------
 # 🚀 Run app (Render compatible)
 # ---------------------------------------------------
+# ---------------------------------------------------
+# 🚀 Run app (LOCAL + safe scheduler start)
+# ---------------------------------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    # Start scheduler once (instead of before_request)
+    print("🚀 Starting scheduler thread...")
+    threading.Thread(target=run_scheduler, daemon=True).start()
+
+    # Use fixed port for localtunnel
+    app.run(host="0.0.0.0", port=5000, debug=True)

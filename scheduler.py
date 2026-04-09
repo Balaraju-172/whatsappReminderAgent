@@ -15,30 +15,35 @@ TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")
 # Initialize Twilio client
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-
 def run_scheduler():
     print("Scheduler started ✅")
     while True:
         check_reminders()
-        time.sleep(10)  # check every 10 seconds
-
+        time.sleep(60)  # check every 1 minute
 
 def check_reminders():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
-
-    print(f"[Scheduler] Checking at {current_time}")
+    print("\n-----------------------------")
+    print(f"⏱️ Current Time: {current_time}")
 
     reminders = get_reminders()
+
+    if not reminders:
+        print("📭 No reminders found")
+        return
 
     for reminder in reminders:
         reminder_id, user, task, time_val = reminder
 
-        print(f"Found reminder → {user} | {task} | {time_val}")
+        print(f"\n📌 Reminder ID: {reminder_id}")
+        print(f"👤 User: {user}")
+        print(f"📝 Task: {task}")
+        print(f"🕒 Stored Time: {time_val}")
 
         if time_val:
             try:
-                # ✅ Convert stored time to today's datetime
+                # Convert stored time to today's datetime
                 reminder_time = datetime.strptime(time_val, "%H:%M")
                 reminder_time = reminder_time.replace(
                     year=now.year,
@@ -46,13 +51,15 @@ def check_reminders():
                     day=now.day
                 )
 
-                # 🔥 CRITICAL FIX: precise time window
-                time_diff = (now - reminder_time).total_seconds()
+                print(f"⏰ Reminder Time (today): {reminder_time.strftime('%H:%M:%S')}")
 
-                # ✅ Only send within 0–60 seconds AFTER exact time
-                # (prevents early trigger + allows small delay)
+                # Calculate time difference
+                time_diff = (now - reminder_time).total_seconds()
+                print(f"⌛ Time Difference: {time_diff:.2f} seconds")
+
+                # Trigger if within 0–60 seconds
                 if 0 <= time_diff < 60:
-                    print(f"🔥 Sending reminder to {user}: {task}")
+                    print(f"🔥 TRIGGERED → Sending reminder to {user}")
 
                     client.messages.create(
                         from_=TWILIO_WHATSAPP_NUMBER,
@@ -60,8 +67,12 @@ def check_reminders():
                         body=f"⏰ Reminder: {task}"
                     )
 
-                    # ✅ Delete after sending
                     delete_reminder(reminder_id)
+                    print("✅ Reminder sent & deleted")
+                elif time_diff < 0:
+                    print("⏳ Not yet time")
+                else:
+                    print("⚠️ Missed window (more than 60s late)")
 
             except Exception as e:
-                print(f"❌ Error sending reminder {reminder_id}:", e)
+                print(f"❌ Error for reminder {reminder_id}: {e}")
