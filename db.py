@@ -1,11 +1,20 @@
-import sqlite3
+# db.py
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
-conn = sqlite3.connect("reminders.db", check_same_thread=False)
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 cursor = conn.cursor()
 
+# Create table if not exists
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS reminders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user TEXT,
     task TEXT,
     time TEXT
@@ -13,10 +22,10 @@ CREATE TABLE IF NOT EXISTS reminders (
 """)
 conn.commit()
 
-def add_reminder(user, task, time):
+def add_reminder(user, task, time_val):
     cursor.execute(
-        "INSERT INTO reminders (user, task, time) VALUES (?, ?, ?)",
-        (user, task, time)
+        "INSERT INTO reminders (user, task, time) VALUES (%s, %s, %s)",
+        (user, task, time_val)
     )
     conn.commit()
 
@@ -25,5 +34,5 @@ def get_reminders():
     return cursor.fetchall()
 
 def delete_reminder(reminder_id):
-    cursor.execute("DELETE FROM reminders WHERE id=?", (reminder_id,))
+    cursor.execute("DELETE FROM reminders WHERE id=%s", (reminder_id,))
     conn.commit()

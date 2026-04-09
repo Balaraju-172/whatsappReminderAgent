@@ -4,3 +4,4 @@ schedule
 python-dotenv
 groq
 gunicorn
+psycopg2-binary
