@@ -15,16 +15,16 @@ cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS reminders (
     id SERIAL PRIMARY KEY,
-    user TEXT,
+    "user" TEXT,
     task TEXT,
-    time TEXT
+    "time" TEXT
 )
 """)
 conn.commit()
 
 def add_reminder(user, task, time_val):
     cursor.execute(
-        "INSERT INTO reminders (user, task, time) VALUES (%s, %s, %s)",
+        "INSERT INTO reminders (\"user\", task, \"time\") VALUES (%s, %s, %s)",
         (user, task, time_val)
     )
     conn.commit()
