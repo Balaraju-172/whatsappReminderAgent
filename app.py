@@ -1,5 +1,6 @@
-from flask import Flask, request
+from flask import Flask, request, abort
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.request_validator import RequestValidator
 from db import add_reminder
 from utils import parse_message
 from scheduler import run_scheduler
@@ -10,6 +11,8 @@ import threading
 load_dotenv()
 
 app = Flask(__name__)
+
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
 
 # ---------------------------------------------------
 # ✅ FIX: Start scheduler ONLY ONCE (Flask 3 compatible)
@@ -22,6 +25,15 @@ app = Flask(__name__)
 # ---------------------------------------------------
 @app.route("/webhook", methods=['POST'])
 def webhook():
+    # Validate that the request genuinely came from Twilio
+    validator = RequestValidator(TWILIO_AUTH_TOKEN)
+    signature = request.headers.get("X-Twilio-Signature", "")
+    url = request.url
+    post_data = request.form.to_dict()
+
+    if not validator.validate(url, post_data, signature):
+        abort(403)
+
     incoming_msg = request.form.get('Body')
     sender = request.form.get('From')
 
